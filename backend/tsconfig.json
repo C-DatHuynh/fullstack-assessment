@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "moduleResolution": "node16"
   },
-  "include": ["index.ts"]
+  "include": ["./**/*.ts"]
 }
