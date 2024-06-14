@@ -1,4 +1,5 @@
 import 'node-fetch';
+import pLimit from 'p-limit';
 
 export interface Server {
   url: string;
@@ -23,14 +24,20 @@ export async function isServerOnline(server: Server, timeout: number = 5000) {
 /**
  * Function to find online server with the lowest priority
  * @param servers - list of target server
+ * @param concurrencyLimit - number of parallel server calls
  * @return online server with the lowest priority
  */
 
-export async function findServer(servers: Server[]): Promise<Server> {
-  const checkPromises = servers.map(async (server) => {
+export async function findServer(
+  servers: Server[],
+  concurrencyLimit: number = 10
+): Promise<Server> {
+  const limit = pLimit(concurrencyLimit);
+  const checkPromise = async (server: Server) => {
     const isOnline = await isServerOnline(server);
     return { server, isOnline };
-  });
+  };
+  const checkPromises = servers.map((server: Server) => limit(() => checkPromise(server)));
 
   const results = await Promise.all(checkPromises);
   const onlineServers = results.filter((result) => result.isOnline).map((result) => result.server);
